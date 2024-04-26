@@ -1,10 +1,11 @@
 import torch
+from copy import deepcopy
 import torch.nn as nn
 from torch.distributions.categorical import Categorical
 from torch.optim import Adam
 import numpy as np
-import gym
-from gym.spaces import Discrete, Box
+import gymnasium as gym
+from gymnasium.spaces import Discrete, Box
 
 def mlp(sizes, activation=nn.Tanh, output_activation=nn.Identity):
     # Build a feedforward neural network.
@@ -58,6 +59,8 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
         # reset episode-specific variables
         obs = env.reset()       # first obs comes from starting distribution
+        if len(obs) == 2:
+            obs = obs[0]
         done = False            # signal from environment that episode is over
         ep_rews = []            # list for rewards accrued throughout ep
 
@@ -76,7 +79,7 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
             # act in the environment
             act = get_action(torch.as_tensor(obs, dtype=torch.float32))
-            obs, rew, done, _ = env.step(act)
+            obs, rew, done, _, _ = env.step(act)
 
             # save action, reward
             batch_acts.append(act)
@@ -93,6 +96,8 @@ def train(env_name='CartPole-v0', hidden_sizes=[32], lr=1e-2,
 
                 # reset episode-specific variables
                 obs, done, ep_rews = env.reset(), False, []
+                if len(obs) == 2:
+                    obs = obs[0]
 
                 # won't render again this epoch
                 finished_rendering_this_epoch = True
